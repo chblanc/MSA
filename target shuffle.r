@@ -1,34 +1,45 @@
 ## 
-## Target Shuffle
+## Target Shuffle Function 
 ##
 
-
+# libraries
+library(dplyr)
+library(ggplot2)
+library(MASS)
 data(Boston)
+
+
+# Add a factor and character variable to data set in order to 
+# find a proper way to deal with those types of variables
+
+Boston$character <- rep(c('A','B'))
+Boston$factor <- as.factor(rep(c('B','C')))
 
 targetShuffle <- function(df, num.iters) {
   
   
     output <- list()
     
-    # if(any(c('factor','character') %in% lapply(df, class))) {
-    #   
-    #   
-    # }
-    # 
     y <- select.list(sort(colnames(df)), title = 'Select Target Variable:')
-  
-    X <- as.matrix(df[,-grep(y, names(df))])
-    Y <- as.matrix(df[,y])
+
+    xnames <- names(df[,-grep(y, names(df))])
     
-    truth <- summary(lm(Y ~ X))$adj.r.squared
+    fmla <- as.formula(paste(y,  "~ ", paste(xnames, collapse= "+")))
+    
+    truth <- summary(lm(fmla, data = df))$adj.r.squared
+    
   
     
     temp <- unlist(lapply(seq_len(num.iters), function(i) {
       
-      newOrder <- sample(nrow(Y))
-      newY <- as.matrix(Y[newOrder,])
+      newOrder <- sample(nrow(df))
+      newY <- as.matrix(df[newOrder,y])
+      df2 <- df
+      df2[,y] <-df[newOrder,y]
       
-      return(summary(lm(newY ~ X))$adj.r.squared)
+      
+      #return(summary(lm(newY ~ X))$adj.r.squared)
+      return(summary(lm(fmla, data = df2))$adj.r.squared)
      
     }))
   
@@ -53,4 +64,7 @@ targetShuffle <- function(df, num.iters) {
   
     
 }
+
+# Test
+test <- targetShuffle(Boston, 10)
 
