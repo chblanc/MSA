@@ -4,7 +4,6 @@
 
 # libraries
 library(MASS)
-library(dplyr)
 library(ggplot2)
 
 ##
@@ -13,11 +12,11 @@ library(ggplot2)
 ## achieved by shuffling the values of the target variable while leaving everything
 ## else in the same position. A model will be run and the result recorded. The 
 ## process will be repeated n times and the end product will give the user
-## a sense of how good the model is (compared to random noise)
+## a sense of how good the model is (compared to random)
 ##
 
 ## For future rounds, consider adding the following functionality:
-##    1) Add more metrics (currently on support adjusted r-squared)
+##    1) Add more metrics (currently only supports adjusted r-squared)
 ##    2) Allow functionality for logistic regression models
 ##
 
@@ -78,8 +77,12 @@ targetShuffle <- function(df, n, graph = FALSE) {
     }
     
     output$plot <- p 
+    cat(paste0('The original model has an adjusted r-squared of: ', round(truth,4)), '\n')
+    cat('Percentile distribution of adjusted R-squared: ', '\n')
+    print(output$percentiles)
     
     return(output)  
+
 }
 
 # Test
