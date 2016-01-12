@@ -35,16 +35,6 @@ targetShuffle <- function(df, n, graph = FALSE) {
     
     temp <- unlist(lapply(seq_len(n), function(i) {
       
-      #newOrder <- sample(nrow(df))
-      #newY <- as.matrix(df[newOrder,y])
-      #df2 <- df
-      #df2[,y] <-df[newOrder,y]
-  
-      #df[,y] <- newY
-      df[,y] <- df[sample(nrow(df)),y]
-      
-      
-      
       return(summary(lm(fmla, data = df))$adj.r.squared)
      
     }))
@@ -53,22 +43,7 @@ targetShuffle <- function(df, n, graph = FALSE) {
     output$percentiles <- quantile(temp, probs = c(.05,.25,.5,.75,.95))
     
     output$true.value <- truth
-    
-#     ggDf <- data.frame(shuffled = temp, label = 'Shuffled Values')
-#     ggDf <- rbind(ggDf, data.frame(shuffled = truth, label = 'True Value'))
-#     
-#     
-#     p <- ggplot(data = ggDf, aes(shuffled)) +
-#       geom_histogram(color = 'white', alpha = .75, binwidth=diff(range(ggDf$shuffled))/30) +
-#       xlab('Adjusted R-Squared') +
-#       ylab('Frequency') +
-#       ggtitle(paste('Adjusted R-Squared Over', n , 'Iterations')) +
-#       theme_bw() +
-#       geom_vline(xintercept = as.numeric(truth), color = 'red') +
-#       geom_text(aes(x = truth, y = nrow(ggDf), label=paste('Original Model')))
-#     
-    
-    
+
    p <-  hist(c(temp, truth), main = paste('Adjusted R-Squared Over', n , 'Iterations'),
          xlab = 'Adjusted R-Squared', breaks = 50, col = 'grey')
     abline(v = truth, col = 'red', lwd = 2)
