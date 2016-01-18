@@ -4,6 +4,7 @@
 
 # libraries
 library(MASS)
+library(pscl)
 library(ggplot2)
 
 ##
@@ -29,23 +30,53 @@ targetShuffle <- function(df, n, graph = FALSE) {
     y <- select.list(sort(colnames(df)), title = 'Select Target Variable:')
     xnames <- names(df[,-grep(y, names(df))])
     fmla <- as.formula(paste(y,  "~ ", paste(xnames, collapse= "+")))
+    
+    
+    if(length(unique(df[,y])) > 2) {
+      
+      metric <- 'Adjusted R-Squared'
+      cat('Note: Assuming continuous response', '\n')
+      
+    model <- lm(fmla, data = df)
     truth <- summary(lm(fmla, data = df))$adj.r.squared
-    
-  
-    
     temp <- unlist(lapply(seq_len(n), function(i) {
+    df[,y] <- df[sample(nrow(df)),y]
       
       return(summary(lm(fmla, data = df))$adj.r.squared)
      
-    }))
-  
-    output$adj.r.squared <- temp
-    output$percentiles <- quantile(temp, probs = c(.05,.25,.5,.75,.95))
+      })) 
     
+    }
+    
+    
+    if(length(unique(df[,y])) == 2) {
+      
+      cat('Note: Assuming binary response', '\n')
+      
+      #df[,y] <- as.factor(df[,y])
+      model <- glm(fmla, data = df, family = 'binomial')
+      truth <- pR2(model) 
+      metric <- select.list(sort(names((truth))), title = 'Select Pseudo  R-Square Metric:')
+      truth <- truth[metric]
+      
+      temp <- unlist(lapply(seq_len(n), function(i) {
+      df[,y] <- df[sample(nrow(df)),y]
+      
+      return(pR2(glm(fmla, data = df, family = 'binomial'))[metric])
+      
+      })) 
+      
+      #temp <- do.call('rbind', temp)
+      
+    }
+  
+    output$original.model <- model
+    output$shuffled.output <- temp
+    output$percentiles <- quantile(temp, probs = c(.05,.25,.5,.75,.95))
     output$true.value <- truth
 
-   p <-  hist(c(temp, truth), main = paste('Adjusted R-Squared Over', n , 'Iterations'),
-         xlab = 'Adjusted R-Squared', breaks = 50, col = 'grey')
+   p <-  hist(c(temp, truth), main = paste(metric, 'Over', n , 'Iterations'),
+         xlab = metric, breaks = 50, col = 'grey')
     abline(v = truth, col = 'red', lwd = 2)
     mtext("Initial Value", at=truth, col="red")
   
@@ -57,8 +88,8 @@ targetShuffle <- function(df, n, graph = FALSE) {
     }
     
     output$plot <- p 
-    cat(paste0('The original model has an adjusted r-squared of: ', round(truth,4)), '\n')
-    cat('Percentile distribution of adjusted R-squared: ', '\n')
+    cat(paste0('The original model has a ', metric, ' of: ', round(truth,4)), '\n')
+    cat(paste0('Percentile distribution of ', metric,':', '\n'))
     print(output$percentiles)
     
     return(output)  
