@@ -23,7 +23,7 @@ library(ggplot2)
 
 
 targetShuffle <- function(df, n, graph = FALSE) {
-  
+  require(pscl)
   
     output <- list()
     
@@ -54,15 +54,20 @@ targetShuffle <- function(df, n, graph = FALSE) {
       cat('Note: Assuming binary response', '\n')
       
       #df[,y] <- as.factor(df[,y])
-      model <- glm(fmla, data = df, family = 'binomial')
+      model <- glm(formula = fmla, family = 'binomial', data = df)
+      print('madeit 1')
+      
       truth <- pR2(model) 
+      print('madeit 2')
       metric <- select.list(sort(names((truth))), title = 'Select Pseudo  R-Square Metric:')
+      print('madeit 3')
       truth <- truth[metric]
+      print('madeit 4')
       
       temp <- unlist(lapply(seq_len(n), function(i) {
       df[,y] <- df[sample(nrow(df)),y]
       
-      return(pR2(glm(fmla, data = df, family = 'binomial'))[metric])
+      return(pR2(glm(fmla, family = 'binomial', data = df))[metric])
       
       })) 
       
