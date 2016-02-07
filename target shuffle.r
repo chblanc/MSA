@@ -23,13 +23,14 @@ library(ggplot2)
 
 
 targetShuffle <- function(df, n, graph = FALSE) {
-  require(pscl)
+  
+  require(rms)
   
     output <- list()
     
     y <- select.list(sort(colnames(df)), title = 'Select Target Variable:')
     xnames <- names(df[,-grep(y, names(df))])
-    fmla <- as.formula(paste(y,  "~ ", paste(xnames, collapse= "+")))
+    fmla <<- as.formula(paste(y,  "~ ", paste(xnames, collapse= "+")))
     
     
     if(length(unique(df[,y])) > 2) {
@@ -50,24 +51,21 @@ targetShuffle <- function(df, n, graph = FALSE) {
     
     
     if(length(unique(df[,y])) == 2) {
+
       
       cat('Note: Assuming binary response', '\n')
-      
-      #df[,y] <- as.factor(df[,y])
-      model <- glm(formula = fmla, family = 'binomial', data = df)
+  
+      model <<- lrm(formula = fmla, data = df)
       print('madeit 1')
       
-      truth <- pR2(model) 
-      print('madeit 2')
-      metric <- select.list(sort(names((truth))), title = 'Select Pseudo  R-Square Metric:')
-      print('madeit 3')
-      truth <- truth[metric]
-      print('madeit 4')
+      truth <- model$stats
+      metric <- select.list(sort(names((truth))), title = 'Select Model Metric:')
+      truth <- truth[[metric]]
       
       temp <- unlist(lapply(seq_len(n), function(i) {
       df[,y] <- df[sample(nrow(df)),y]
       
-      return(pR2(glm(fmla, family = 'binomial', data = df))[metric])
+      return(lrm(fmla, data = df)$stats[[metric]])
       
       })) 
       
@@ -94,7 +92,7 @@ targetShuffle <- function(df, n, graph = FALSE) {
     
     output$plot <- p 
     cat(paste0('The original model has a ', metric, ' of: ', round(truth,4)), '\n')
-    cat(paste0('Percentile distribution of ', metric,':', '\n'))
+    cat(paste0('Percentile distribution of ', metric, ' across ', n, ' interations',':', '\n'))
     print(output$percentiles)
     
     return(output)  
