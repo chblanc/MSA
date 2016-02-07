@@ -2,11 +2,6 @@
 ## Target Shuffle Function 
 ##
 
-# libraries
-library(MASS)
-library(pscl)
-library(ggplot2)
-
 ##
 ## Target shuffle function will automatically shuffle the values of the target
 ## variable to get a sense of 'how good' the original model is. This will be 
@@ -22,7 +17,7 @@ library(ggplot2)
 ##
 
 
-targetShuffle <- function(df, n, graph = FALSE) {
+targetShuffle <- function(df, n) {
   
   require(rms)
   
@@ -30,7 +25,7 @@ targetShuffle <- function(df, n, graph = FALSE) {
     
     y <- select.list(sort(colnames(df)), title = 'Select Target Variable:')
     xnames <- names(df[,-grep(y, names(df))])
-    fmla <<- as.formula(paste(y,  "~ ", paste(xnames, collapse= "+")))
+    fmla <- as.formula(paste(y,  "~ ", paste(xnames, collapse= "+")))
     
     
     if(length(unique(df[,y])) > 2) {
@@ -40,8 +35,11 @@ targetShuffle <- function(df, n, graph = FALSE) {
       
     model <- lm(fmla, data = df)
     truth <- summary(lm(fmla, data = df))$adj.r.squared
+    
+    
     temp <- unlist(lapply(seq_len(n), function(i) {
-    df[,y] <- df[sample(nrow(df)),y]
+      
+            df[,y] <- df[sample(nrow(df)),y]
       
       return(summary(lm(fmla, data = df))$adj.r.squared)
      
@@ -55,21 +53,20 @@ targetShuffle <- function(df, n, graph = FALSE) {
       
       cat('Note: Assuming binary response', '\n')
   
-      model <<- lrm(formula = fmla, data = df)
-      print('madeit 1')
-      
+      model <- lrm(formula = fmla, data = df)
+
       truth <- model$stats
       metric <- select.list(sort(names((truth))), title = 'Select Model Metric:')
       truth <- truth[[metric]]
       
+      
       temp <- unlist(lapply(seq_len(n), function(i) {
-      df[,y] <- df[sample(nrow(df)),y]
+      
+              df[,y] <- df[sample(nrow(df)),y]
       
       return(lrm(fmla, data = df)$stats[[metric]])
       
       })) 
-      
-      #temp <- do.call('rbind', temp)
       
     }
   
@@ -83,12 +80,6 @@ targetShuffle <- function(df, n, graph = FALSE) {
     abline(v = truth, col = 'red', lwd = 2)
     mtext("Initial Value", at=truth, col="red")
   
-    
-    if(graph == TRUE) {
-   
-       plot(p)
-  
-    }
     
     output$plot <- p 
     cat(paste0('The original model has a ', metric, ' of: ', round(truth,4)), '\n')
